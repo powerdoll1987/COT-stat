@@ -36,7 +36,7 @@ if __name__ == '__main__':
     fmax = lambda x : x.max()   
     funcList = [fret, fmin, fmax]
     price = tf.rolling(price, 5, funcList, colNames, newColNames)
-    selDatePrice = price.ix[priceDate]
+    selDatePrice = price.ix[priceDate].copy()
 
     # 计算pos的Z-SCORE
     pos['LONG NPOI'] = pos.ix[:,0] / pos.ix[:,2]
@@ -46,11 +46,33 @@ if __name__ == '__main__':
     funcList = [tf.zscore, tf.zscore]
     pos = tf.rolling(pos, -25, funcList, colNames, newColNames)
     pos.dropna(inplace = True)
-
+    
+    # 把pos和price连接
+    pos.index = pos.index.shift(3, 'D') # pos的日期是周二，要改成release date周五
+    selDatePrice.index = selDatePrice.index.shift(-3, 'D') # price的日期是下周一，也改成周五
+    subPos = pos.ix[:, 0:2].copy()
+    subPos[['LONG Z-SCORE', 'SHORT Z-SCORE']] = pos[['LONG Z-SCORE', 'SHORT Z-SCORE']]
+    subSelPrice = selDatePrice[['NEXT_5D_RETURN', 'NEXT_5D_LOW', 'NEXT_5D_HIGH']].copy()
+    result = pd.concat([subPos, subSelPrice], axis = 1, join = 'inner')
+    
     # 按Z-score分组
-    pos['LONG ZS KEY'] = tf.histoCut(pos['LONG Z-SCORE'], 0.5) #生产分组用的key
-    pos['SHORT ZS KEY'] = tf.histoCut(pos['SHORT Z-SCORE'], 0.5)
-    matCount = pos.groupby(['LONG ZS KEY', 'SHORT ZS KEY'])['LONG NPOI'].count().unstack()
+    result['LONG ZS KEY'] = tf.histoCut(result['LONG Z-SCORE'], 0.5) #产生分组用的key
+    result['SHORT ZS KEY'] = tf.histoCut(result['SHORT Z-SCORE'], 0.5)
+    matCount = result.groupby(['LONG ZS KEY', 'SHORT ZS KEY'])['NEXT_5D_RETURN'].count().unstack()
+    matAveRet = result.groupby(['LONG ZS KEY', 'SHORT ZS KEY'])['NEXT_5D_RETURN'].mean().unstack()
+    matWinProb = result.groupby(['LONG ZS KEY', 'SHORT ZS KEY'])['NEXT_5D_RETURN'].apply(tf.posPct).unstack()
     matCount = tf.histoSort(matCount)
+    matCount = tf.histoSort(matCount.T)
+    matAveRet = tf.histoSort(matAveRet)
+    matAveRet = tf.histoSort(matAveRet.T)
+    matWinProb = tf.histoSort(matWinProb)
+    matWinProb = tf.histoSort(matWinProb.T)
+    
+    # 输出
+    writer = pd.ExcelWriter('output.xlsx')
+    matCount.to_excel(writer, 'matCount')
+    matAveRet.to_excel(writer, 'matAveRet')
+    matWinProb.to_excel(writer, 'matWinProb')
+    writer.save()
 
     a = 1
