@@ -24,11 +24,17 @@ if __name__ == '__main__':
     # 调整价格数据
     posDate = pos.index #统计pos的日期是周二，但是release是周末
     priceDate = posDate.shift(6, 'D') #所以下个周一（6天后）是第一个公布数据后的交易日
-    colNames = ['PX_LOW', 'PX_HIGH']
-    newColNames = ['NEXT_5D_LOW','NEXT_5D_HIGH']
+    # 新建一列，周一到周四是open price，周五是close price
+    price['OPEN_CLOSE'] = price['PX_OPEN']
+    friday = posDate.shift(3, 'D') # 下个周五是公布数据（周二）的3天后
+    price.ix[friday, 'OPEN_CLOSE'] = price.ix[friday, 'PX_LAST'] 
+    # 计算统计要用到的数据
+    colNames = ['OPEN_CLOSE', 'PX_LOW', 'PX_HIGH']
+    newColNames = ['NEXT_5D_RETURN', 'NEXT_5D_LOW','NEXT_5D_HIGH']
+    fret = lambda x : x[-1] / x[0] - 1
     fmin = lambda x : x.min()
-    fmax = lambda x : x.max()
-    funcList = [fmin, fmax]
+    fmax = lambda x : x.max()   
+    funcList = [fret, fmin, fmax]
     price = tf.rolling(price, 5, funcList, colNames, newColNames)
     selDatePrice = price.ix[priceDate]
 
