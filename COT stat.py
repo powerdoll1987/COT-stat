@@ -24,8 +24,7 @@ if __name__ == '__main__':
     price.set_index(label, inplace = True)
 
     # 调整价格数据
-    posDate = pos.index #统计pos的日期是周二，但是release是周末
-    priceDate = posDate.shift(6, 'D') #所以下个周一（6天后）是第一个公布数据后的交易日
+
     # 新建一列，周一到周四是open price，周五是close price
     price['OPEN_CLOSE'] = price['PX_OPEN']
     friday = posDate.shift(3, 'D') # 下个周五是公布数据（周二）的3天后
@@ -38,6 +37,9 @@ if __name__ == '__main__':
     fmax = lambda x : x.max()   
     funcList = [fret, fmin, fmax]
     price = tf.rolling(price, 5, funcList, colNames, newColNames)
+    
+    posDate = pos.index #统计pos的日期是周二，但是release是周末
+    priceDate = posDate.shift(6, 'D') #所以下个周一（6天后）是第一个公布数据后的交易日
     selDatePrice = price.ix[priceDate].copy()
 
     # 计算pos的Z-SCORE
