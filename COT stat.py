@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # 按照最后的Z-score找到以前同一个Z-SCORE分组的数据
     long_zs_key = tf.histoCutKey(pos.ix[-1, str_LONG_ZSCORE], step)
     short_zs_key= tf.histoCutKey(pos.ix[-1, str_SHORT_ZSCORE], step)
-    histRef = pd.DataFrame()
+    histRef = pd.DataFrame(columns = result.columns)
     i = 0    
     while i < len(result.index):
         if result[str_LONG_ZS_KEY][i] == long_zs_key and result[str_SHORT_ZS_KEY][i] == short_zs_key:
