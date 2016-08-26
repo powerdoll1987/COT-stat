@@ -28,10 +28,10 @@ def test(df):
 if __name__ == '__main__':
     # 列名称常量
     # for price dataframe
-    str_NEXT_ND_RETURN = 'NEXT_5D_RETURN'
+    str_NEXT_ND_RETURN = 'NEXT_ND_RETURN'
     str_NEXT_ND_MAX_UP = 'NEXT_ND_MAX_UP'
     str_NEXT_ND_MAX_DOWN = 'NEXT_ND_MAX_DOWN'
-    const_zs_roll_span = -100
+    const_zs_roll_span = -100 # 计算Z-SCORE用的周数
     # for pos dataframe
     str_LONG_ZSCORE = 'LONG Z-SCORE'
     str_SHORT_ZSCORE = 'SHORT Z-SCORE'
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     str_SHORT_ZS_KEY = 'SHORT ZS KEY'
     str_LONG_NPOI = 'LONG NPOI'
     str_SHORT_NPOI = 'SHORT NPOI'
-    const_price_roll_span = 20
+    const_price_roll_span = 40 # 计算未来return用的日数
     
     # 读入数据
     pos = pd.read_excel('CLA COT.xls', sheetname = 'Sheet1 (2)')
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     colNames = [str_LONG_NPOI,str_SHORT_NPOI]
     newColNames = [str_LONG_ZSCORE, str_SHORT_ZSCORE]
     funcList = [tf.zscore, tf.zscore]
-    pos = tf.rolling(pos, -25, funcList, colNames, newColNames)
+    pos = tf.rolling(pos, const_zs_roll_span, funcList, colNames, newColNames)
     pos.dropna(inplace = True)
     
     # 把pos和price连接, 按周五的公布日期连接
